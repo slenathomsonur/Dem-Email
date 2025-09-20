@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Confirmation System</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 450px;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        p {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            border-color: #4a86e8;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(74, 134, 232, 0.2);
+        }
+        
+        button {
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 12px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            transition: opacity 0.3s;
+        }
+        
+        button:hover {
+            opacity: 0.9;
+        }
+        
+        .step {
+            display: none;
+        }
+        
+        .step.active {
+            display: block;
+        }
+        
+        .email-preview {
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: left;
+            border-left: 4px solid #2575fc;
+        }
+        
+        .email-header {
+            color: #777;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        .confirmation-link {
+            color: #2575fc;
+            word-break: break-all;
+            margin: 15px 0;
+            font-weight: 500;
+        }
+        
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        
+        .countdown {
+            font-size: 14px;
+            color: #777;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Step 1: Email Input -->
+        <div class="step active" id="step1">
+            <h1>Confirm Your Email</h1>
+            <p>Please enter your email address to receive a confirmation link.</p>
+            
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" placeholder="your.email@example.com">
+            </div>
+            
+            <button id="send-button">Send Confirmation Email</button>
+        </div>
+        
+        <!-- Step 2: Confirmation Code Input -->
+        <div class="step" id="step2">
+            <h1>Check Your Email</h1>
+            <p>We've sent a confirmation link to <strong id="user-email"></strong>.</p>
+            
+            <div class="email-preview">
+                <div class="email-header">
+                    <strong>From:</strong> adrianbrooks77@outlook.com<br>
+                    <strong>To:</strong> <span id="preview-email"></span><br>
+                    <strong>Subject:</strong> Confirm your email address
+                </div>
+                <p>Hello,</p>
+                <p>Please click the link below to confirm your email address:</p>
+                <p class="confirmation-link" id="fake-link">https://confirm.email/?token=ABC123XYZ</p>
+                <p>If you didn't request this, please ignore this email.</p>
+            </div>
+            
+            <p>Enter the confirmation code from the email:</p>
+            
+            <div class="form-group">
+                <label for="code">Confirmation Code</label>
+                <input type="text" id="code" placeholder="Enter ABC123XYZ">
+            </div>
+            
+            <button id="confirm-button">Confirm Email</button>
+            
+            <p class="countdown">Redirecting to Google in <span id="countdown">10</span> seconds...</p>
+        </div>
+        
+        <!-- Step 3: Success Message -->
+        <div class="step" id="step3">
+            <h1>Email Confirmed!</h1>
+            <div class="success-message">
+                <p>Your email has been successfully verified.</p>
+            </div>
+            <p>You will now be redirected to Google.com.</p>
+            <p class="countdown">Redirecting in <span id="final-countdown">5</span> seconds...</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const step1 = document.getElementById('step1');
+            const step2 = document.getElementById('step2');
+            const step3 = document.getElementById('step3');
+            const emailInput = document.getElementById('email');
+            const userEmailSpan = document.getElementById('user-email');
+            const previewEmail = document.getElementById('preview-email');
+            const sendButton = document.getElementById('send-button');
+            const confirmButton = document.getElementById('confirm-button');
+            const codeInput = document.getElementById('code');
+            const countdown = document.getElementById('countdown');
+            const finalCountdown = document.getElementById('final-countdown');
+            
+            // Handle sending the "email"
+            sendButton.addEventListener('click', function() {
+                const email = emailInput.value.trim();
+                
+                if (!email || !email.includes('@')) {
+                    alert('Please enter a valid email address');
+                    return;
+                }
+                
+                // Update the UI with the email
+                userEmailSpan.textContent = email;
+                previewEmail.textContent = email;
+                
+                // Show the next step
+                step1.classList.remove('active');
+                step2.classList.add('active');
+                
+                // Start countdown for step 2
+                let timeLeft = 10;
+                const countdownInterval = setInterval(() => {
+                    timeLeft--;
+                    countdown.textContent = timeLeft;
+                    
+                    if (timeLeft <= 0) {
+                        clearInterval(countdownInterval);
+                        simulateConfirmation();
+                    }
+                }, 1000);
+            });
+            
+            // Handle confirmation code submission
+            confirmButton.addEventListener('click', simulateConfirmation);
+            
+            function simulateConfirmation() {
+                // In a real application, you would validate the code here
+                
+                // Show success step
+                step2.classList.remove('active');
+                step3.classList.add('active');
+                
+                // Start final countdown
+                let timeLeft = 5;
+                const countdownInterval = setInterval(() => {
+                    timeLeft--;
+                    finalCountdown.textContent = timeLeft;
+                    
+                    if (timeLeft <= 0) {
+                        clearInterval(countdownInterval);
+                        // Redirect to Google
+                        window.location.href = 'https://www.google.com';
+                    }
+                }, 1000);
+            }
+            
+            // Allow pressing Enter to submit
+            emailInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendButton.click();
+                }
+            });
+            
+            codeInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    confirmButton.click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
